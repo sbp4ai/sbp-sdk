@@ -1,4 +1,47 @@
-# sbp-sdk · SBP 单文件网页客户端
+# sbp-sdk · SBP single-file web client
+
+The **shared web library** of SBP (Session Bridge Protocol): one file `sbp-sdk.js` (with inline CSS).
+After a `<script>` include, call `SBP.mount(el, opts)` to render the session list + live screen +
+option cards + input box — no build step required.
+
+## Role
+
+- This is a **shared library**, not the UI of any specific client:
+  - `sbp-server` serves it as a static file (`/sbp-sdk.js`, `/sdk/*`); the IM card's "lazy-loaded web page" path uses exactly this;
+  - any third-party web page / iframe can also reference it directly.
+- It shares the **same protocol semantics** with `sbp-minis` (WeChat mini-program) and `sbp-agent/panel` (local panel),
+  but each implements its own transport (the mini-program is limited by the wx environment; the panel has its own REST/WS switch).
+
+## Usage
+
+```html
+<script src="/sbp-sdk.js"></script>
+<div id="app"></div>
+<script>
+  SBP.mount(document.getElementById('app'), {
+    wsUrl: 'wss://your-sbp-server/ws',
+    token: 'DEVICE_TOKEN'
+  })
+</script>
+```
+
+Constraints (first screen only fetches sessionId + title; history loads on click; reverse paging) — see
+`spec/SBP-0.1.md` in the `sbp-spec` repository.
+
+## Dependency in sbp-server
+
+`sbp-server` pulls in this repository via **git submodule**, mounted at `server/sdk/` (matching `SDK_DIR = REPO / "sdk"` in code).
+When cloning sbp-server, use:
+
+```bash
+git clone --recurse-submodules https://github.com/sbp4ai/sbp-server.git
+```
+
+After editing this library, run `git submodule update --remote sdk` inside sbp-server to sync.
+
+---
+
+# sbp-sdk · SBP 单文件网页客户端（中文）
 
 SBP（Session Bridge Protocol）的**网页端共享库**：一个文件 `sbp-sdk.js`
 （含内联 CSS），`<script>` 引入后调用 `SBP.mount(el, opts)` 即可渲染会话列表 +
