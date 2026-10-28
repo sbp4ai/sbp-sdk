@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>SBP · 绑定设备</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100dvh;background:#f4f5f7;display:flex;align-items:center;justify-content:center;
+    font:14px/1.6 -apple-system,BlinkMacSystemFont,"PingFang SC","Segoe UI",sans-serif;color:#111827;padding:20px}
+  .card{width:100%;max-width:380px;background:#fff;border:1px solid #e6e8ec;border-radius:16px;padding:22px}
+  h1{font-size:16px;margin:0 0 4px}
+  p.sub{color:#6b7280;font-size:12.5px;margin:0 0 18px}
+  label{display:block;font-size:12px;color:#374151;margin:12px 0 5px}
+  input{width:100%;border:1px solid #e6e8ec;border-radius:10px;padding:11px 12px;font-size:15px;
+    background:#fafbfc;outline:none;font-family:inherit}
+  input:focus{border-color:#2563eb;background:#fff}
+  input.code{letter-spacing:3px;text-transform:uppercase;font-family:ui-monospace,Menlo,monospace;text-align:center}
+  button{width:100%;margin-top:16px;border:0;background:#2563eb;color:#fff;border-radius:10px;
+    padding:12px;font-size:14px;font-weight:600;cursor:pointer}
+  button:disabled{background:#cbd5e1}
+  .err{margin-top:12px;color:#b91c1c;font-size:12.5px;display:none}
+  .tip{margin-top:16px;color:#9ca3af;font-size:11.5px;line-height:1.7}
+</style>
+</head>
+<body>
+<form class="card" id="f">
+  <h1>绑定这台设备</h1>
+  <p class="sub">输入电脑上 <code>sbp-bridge</code> 打印的 8 位验证码</p>
+  <label>验证码</label>
+  <input class="code" id="code" placeholder="ABCD-EFGH" maxlength="9" autocomplete="off">
+  <label>你的 IM 账号（可选）</label>
+  <input id="user" placeholder="ou_xxx / 手机号后四位" autocomplete="off">
+  <button type="submit" id="go">绑定并进入</button>
+  <div class="err" id="err"></div>
+  <div class="tip">绑定成功后，服务端会签发 12 小时的 client_token。设备侧可随时通过 <code>/api/device/&lt;id&gt;/unbind</code> 撤销。</div>
+</form>
+<script>
+(function () {
+  var m = /code=([A-Za-z0-9-]+)/.exec(location.search);
+  if (m) document.getElementById("code").value = decodeURIComponent(m[1]).toUpperCase();
+  var f = document.getElementById("f"), err = document.getElementById("err"), go = document.getElementById("go");
+  f.onsubmit = async function (e) {
+    e.preventDefault();
+    err.style.display = "none";
+    go.disabled = true; go.textContent = "绑定中…";
+    try {
+      var r = await fetch("/api/bind", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: document.getElementById("code").value.trim(),
+                               im_user: document.getElementById("user").value.trim() || "web-user",
+                               channel: "web" })
+      });
+      var j = await r.json();
+      if (!j.ok) throw new Error((j.err && j.err.msg) || "绑定失败");
+      location.replace("/#t=" + encodeURIComponent(j.client_token) + "&d=" + j.device_id);
+    } catch (ex) {
+      err.textContent = ex.message;
+      err.style.display = "block";
+      go.disabled = false; go.textContent = "绑定并进入";
+    }
+  };
+})();
+</script>
+</body>
+</html>

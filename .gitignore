@@ -1,0 +1,13 @@
+# dependencies
+node_modules/
+*.log
+
+# os / editor
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# build / dist
+dist/
+docs/_site/
